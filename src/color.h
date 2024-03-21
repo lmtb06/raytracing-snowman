@@ -51,3 +51,8 @@ struct Color
         b = std::clamp(b, 0.0, 1.0);
     }
 };
+
+inline Color operator*(double s, const Color &c)
+{
+    return c * s;
+}

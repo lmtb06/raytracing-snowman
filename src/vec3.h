@@ -57,3 +57,10 @@ struct Vec3
         return *this / norm();
     }
 };
+
+inline Vec3 operator*(double t, const Vec3 &v)
+{
+    return v * t;
+}
+
+using Point3 = Vec3;
