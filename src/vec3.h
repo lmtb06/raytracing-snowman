@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <iostream>
 
 struct Vec3
 {
@@ -61,6 +62,12 @@ struct Vec3
 inline Vec3 operator*(double t, const Vec3 &v)
 {
     return v * t;
+}
+
+inline std::ostream &operator<<(std::ostream &os, const Vec3 &v)
+{
+    os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+    return os;
 }
 
 using Point3 = Vec3;
