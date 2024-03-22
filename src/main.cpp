@@ -1,14 +1,29 @@
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "vec3.h"
 #include "color.h"
 #include "image.h"
 #include "ray.h"
 #include "camera.h"
+#include "sphere.h"
+
+bool hitSphere(const Sphere& sphere, const Ray& ray){
+    double a = ray.direction.dot(ray.direction);
+    double b = 2*ray.direction.dot(ray.origin - sphere.center);
+    double c = (ray.origin - sphere.center).dot(ray.origin - sphere.center) - sphere.radius*sphere.radius;
+    double discriminant = b*b - 4*a*c;
+    return discriminant >= 0;
+}
 
 Color rayColor(const Ray &ray)
 {
+    if (hitSphere(Sphere(Point3(0, 0, -4), 0.6), ray))
+    {
+        return Color(1, 0, 1.);
+    }
+
     Vec3 unitDirection = ray.direction.normalize();
     double t = 0.5 * (unitDirection.y + 1.0);
-    return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.5, 0.7, 1.0);
+    return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.1, 0.2, 1.0);
 }
 
 void drawSimpleImage(int width = 800, int height = 600)
@@ -18,7 +33,7 @@ void drawSimpleImage(int width = 800, int height = 600)
     double aspectRatio = double(width) / height;
     double fov = 90;
     Point3 position(0, 0, 0);
-    Vec3 direction(0, 0, -1);
+    Vec3 direction(0, -0.1, -1);
     Vec3 up(0, 1, 0);
 
     Camera camera(aspectRatio, fov, position, direction, up);
@@ -40,7 +55,7 @@ void drawSimpleImage(int width = 800, int height = 600)
     }
 
     // Enregistrer l'image dans un fichier PPM
-    image.savePPM("image.ppm");
+    image.savePNG("image.png");
 }
 
 int main()

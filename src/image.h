@@ -3,6 +3,8 @@
 #include "color.h"
 #include <vector>
 #include <fstream>
+#include "stb_image_write.h"
+#include <memory>
 
 struct Image
 {
@@ -21,6 +23,28 @@ struct Image
         return pixels[i + j * width];
     }
 
+    std::unique_ptr<unsigned char[]> getDataSTBFormat() const
+    {
+        // Create a dynamic array to hold the image data
+        const int channels = 3;
+        auto data = std::make_unique<unsigned char[]>(width * height * channels);
+
+        // Copy pixel data to the array
+        for (int j = 0; j < height; ++j)
+        {
+            for (int i = 0; i < width; ++i)
+            {
+                Color color = getPixel(i, j);
+                int index = (j * width + i) * channels;
+                data[index + 0] = static_cast<unsigned char>(color.r * 255);
+                data[index + 1] = static_cast<unsigned char>(color.g * 255);
+                data[index + 2] = static_cast<unsigned char>(color.b * 255);
+            }
+        }
+
+        return data;
+    }
+
     void savePPM(const std::string &filename) const
     {
         std::ofstream file(filename, std::ios::binary);
@@ -37,5 +61,12 @@ struct Image
                      << static_cast<int>(color.b * 255) << '\n';
             }
         }
+    }
+
+    void savePNG(const std::string &filename) const
+    {
+        // Save the image data to a PNG file
+        auto data = getDataSTBFormat();
+        stbi_write_png(filename.c_str(), width, height, 3, data.get(), width * 3);
     }
 };
