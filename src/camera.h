@@ -64,8 +64,8 @@ struct Camera
 
         if (world.hit(ray, record, tMin, tMax))
         {
-            Vec3 direction = randomOnHemisphere(record.normal);
-            return 0.5 * rayColor(Ray(record.point, direction), world, tMin, tMax, depth - 1);
+            Vec3 direction = record.normal + randomUnitVector();
+            return 0.6 * rayColor(Ray(record.point, direction), world, tMin, tMax, depth - 1);
             // return (Color)(0.5 * ((record.normal + Vec3(1, 1, 1))));
         }
 
@@ -85,7 +85,7 @@ struct Camera
                 for (int s = 0; s < samplesPerPixel; ++s)
                 {
                     Ray ray = getRay(i, j, width, height);
-                    pixelColor = pixelColor + rayColor(ray, world);
+                    pixelColor = pixelColor + rayColor(ray, world, 0.001, INFINITY, maxDepth);
                 }
                 image.setPixel(i, j, (Color)(pixelColor / samplesPerPixel));
             }

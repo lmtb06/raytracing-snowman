@@ -12,7 +12,7 @@ void drawSimpleImage(int width = 800, int height = 600)
     Vec3 direction(0, 0, 1);
     Vec3 up(0, 1, 0);
 
-    Camera camera(16.0 / 9.0, fov, position, direction, up);
+    Camera camera(16.0 / 9.0, fov, position, direction, up, 50);
 
     HittableList world;
     world.add(std::make_shared<Sphere>(Vec3(0, 0, 1), 0.5));
@@ -25,8 +25,8 @@ void drawSimpleImage(int width = 800, int height = 600)
 
 int main()
 {
-    int width = 400;
-    int height = (int)400 / (16.0 / 9.0);
+    int width = 800;
+    int height = (int)width / (16.0 / 9.0);
     drawSimpleImage(width, height);
     return 0;
 }
