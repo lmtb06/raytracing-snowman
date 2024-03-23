@@ -50,6 +50,11 @@ struct Color
         g = std::clamp(g, 0.0, 1.0);
         b = std::clamp(b, 0.0, 1.0);
     }
+
+    Color linearToGamma() const
+    {
+        return Color(std::sqrt(r), std::sqrt(g), std::sqrt(b));
+    }
 };
 
 inline Color operator*(double s, const Color &c)
