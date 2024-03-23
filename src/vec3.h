@@ -73,6 +73,11 @@ struct Vec3
         const double s = 1e-8;
         return (fabs(x) < s) && (fabs(y) < s) && (fabs(z) < s);
     }
+
+    Vec3 reflect(const Vec3 &normal) const
+    {
+        return *this - normal * 2 * (normal.dot(*this));
+    }
 };
 
 inline Vec3 operator*(double t, const Vec3 &v)
