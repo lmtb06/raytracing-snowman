@@ -67,6 +67,12 @@ struct Vec3
     {
         return Vec3(drand48() * (max - min) + min, drand48() * (max - min) + min, drand48() * (max - min) + min);
     }
+
+    bool nearZero() const
+    {
+        const double s = 1e-8;
+        return (fabs(x) < s) && (fabs(y) < s) && (fabs(z) < s);
+    }
 };
 
 inline Vec3 operator*(double t, const Vec3 &v)

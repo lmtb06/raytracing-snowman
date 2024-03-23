@@ -15,8 +15,10 @@ void drawSimpleImage(int width = 800, int height = 600)
     Camera camera(16.0 / 9.0, fov, position, direction, up, 50);
 
     HittableList world;
-    world.add(std::make_shared<Sphere>(Vec3(0, 0, 1), 0.5));
-    world.add(std::make_shared<Sphere>(Vec3(0, -100.5, 1), 100));
+    Sphere sphere1(Vec3(0, 0, 1), 0.5, std::make_shared<Lambertian>(Color(0.8, 0.3, 0.3)));
+    Sphere sphere2(Vec3(0, -100.5, 1), 100, std::make_shared<Lambertian>(Color(0.8, 0.8, 0.0)));
+    world.add(std::make_shared<Sphere>(sphere1));
+    world.add(std::make_shared<Sphere>(sphere2));
 
     Image image = camera.render(world, width, height);
 

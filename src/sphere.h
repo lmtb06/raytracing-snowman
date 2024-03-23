@@ -2,13 +2,17 @@
 
 #include "vec3.h"
 #include "hittable.h"
+#include "ray.h"
+#include "material.h"
+#include <memory>
 
 struct Sphere : public Hittable
 {
     Vec3 center;
     double radius;
+    std::shared_ptr<Material> material;
 
-    Sphere(const Vec3 &center, double radius) : center(center), radius(radius) {}
+    Sphere(const Vec3 &center, double radius, std::shared_ptr<Material> material) : center(center), radius(radius), material(material) {}
 
     bool hit(const Ray &ray, HitRecord &record, double tMin, double tMax) const override
     {
@@ -36,10 +40,11 @@ struct Sphere : public Hittable
         {
             return false;
         }
-        
+
         record.t = smallestT;
         record.point = ray.at(smallestT);
         record.normal = (record.point - center) / radius;
+        record.material = material;
 
         return true;
     }

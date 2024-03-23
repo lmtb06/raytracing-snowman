@@ -4,6 +4,9 @@
 #include "ray.h"
 #include "utils.h"
 #include "hittable.h"
+#include "image.h"
+#include "color.h"
+#include "material.h"
 #include <iostream>
 #include <random>
 
@@ -64,9 +67,11 @@ struct Camera
 
         if (world.hit(ray, record, tMin, tMax))
         {
-            Vec3 direction = record.normal + randomUnitVector();
-            return 0.1 * rayColor(Ray(record.point, direction), world, tMin, tMax, depth - 1);
-            // return (Color)(0.5 * ((record.normal + Vec3(1, 1, 1))));
+            Ray scattered;
+            Color attenuation;
+            if (record.material->scatter(ray, record, attenuation, scattered))
+                return attenuation * rayColor(scattered, world, tMin, tMax, depth - 1);
+            return Color(0, 0, 0);
         }
 
         Vec3 unitDirection = ray.direction.normalize();
@@ -74,7 +79,7 @@ struct Camera
         return (Color)((1.0 - t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0));
     }
 
-        Image render(const Hittable &world, int width, int height) const
+    Image render(const Hittable &world, int width, int height) const
     {
         double scale = 1.0 / samplesPerPixel;
         Image image(width, height);
