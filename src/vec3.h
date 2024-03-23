@@ -57,11 +57,49 @@ struct Vec3
     {
         return *this / norm();
     }
+
+    static Vec3 random()
+    {
+        return Vec3(drand48(), drand48(), drand48());
+    }
+
+    static Vec3 random(double min, double max)
+    {
+        return Vec3(drand48() * (max - min) + min, drand48() * (max - min) + min, drand48() * (max - min) + min);
+    }
 };
 
 inline Vec3 operator*(double t, const Vec3 &v)
 {
     return v * t;
+}
+
+inline Vec3 randomInUnitSphere()
+{
+    while (true)
+    {
+        Vec3 p = Vec3::random(-1, 1);
+        if (p.dot(p) < 1)
+            return p;
+    }
+}
+
+inline Vec3 randomUnitVector()
+{
+    return randomInUnitSphere().normalize();
+}
+
+inline Vec3 randomOnHemisphere(const Vec3 &normal)
+{
+    Vec3 onUnitSphere = randomUnitVector();
+    if (onUnitSphere.dot(normal) > 0.0)
+    {
+        return onUnitSphere;
+    }
+    else
+    {
+        return -onUnitSphere;
+    }
 }
 
 inline std::ostream &operator<<(std::ostream &os, const Vec3 &v)

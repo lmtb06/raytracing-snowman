@@ -25,18 +25,20 @@ struct Sphere : public Hittable
 
         double t1 = (-half_b - sqrt(discriminant)) / a;
         double t2 = (-half_b + sqrt(discriminant)) / a;
-        double nearestT = t1;
-        if (nearestT < tMin || nearestT > tMax)
+        double smallestT = t1;
+
+        if (t2 < t1 && tMin <= t2 && t2 <= tMax)
         {
-            nearestT = t2;
-            if (nearestT < tMin || nearestT > tMax)
-            {
-                return false;
-            }
+            smallestT = t2;
         }
 
-        record.t = nearestT;
-        record.point = ray.at(nearestT);
+        if (smallestT < tMin || smallestT > tMax)
+        {
+            return false;
+        }
+        
+        record.t = smallestT;
+        record.point = ray.at(smallestT);
         record.normal = (record.point - center) / radius;
 
         return true;

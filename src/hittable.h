@@ -13,7 +13,7 @@ struct HitRecord
 
 struct Hittable
 {
-    virtual bool hit(const Ray &ray, HitRecord &record, double tMin=0, double tMax=INFINITY) const = 0;
+    virtual bool hit(const Ray &ray, HitRecord &record, double tMin=0.001, double tMax=INFINITY) const = 0;
 };
 
 struct HittableList : public Hittable
@@ -26,7 +26,7 @@ struct HittableList : public Hittable
     void clear() { objects.clear(); }
     void add(std::shared_ptr<Hittable> object) { objects.push_back(object); }
 
-    virtual bool hit(const Ray &ray, HitRecord &record, double tMin=0, double tMax=INFINITY) const override
+    virtual bool hit(const Ray &ray, HitRecord &record, double tMin=0.001, double tMax=INFINITY) const override
     {
         HitRecord tempRecord;
         bool hitAnything = false;
