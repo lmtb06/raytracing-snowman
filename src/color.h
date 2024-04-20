@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vec3.h"
+#include "utils.h"
 #include <algorithm>
 
 // Couleur RGB normalisée (comprise entre 0 et 1)
@@ -8,7 +9,8 @@ struct Color
 {
     double r, g, b;
 
-    Color(double r = 0, double g = 0, double b = 0) : r(r), g(g), b(b) {
+    Color(double r = 0, double g = 0, double b = 0) : r(r), g(g), b(b)
+    {
         clamp();
     }
 
@@ -54,6 +56,11 @@ struct Color
     Color linearToGamma() const
     {
         return Color(std::sqrt(r), std::sqrt(g), std::sqrt(b));
+    }
+
+    static Color random(double min = 0.0, double max = 1.0)
+    {
+        return Color(randomDouble(min, max), randomDouble(min, max), randomDouble(min, max));
     }
 };
 

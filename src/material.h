@@ -3,6 +3,7 @@
 #include "ray.h"
 #include "color.h"
 #include "hittable.h"
+#include "utils.h"
 
 struct Material
 {
@@ -42,5 +43,43 @@ struct Metal : public Material
         scattered = Ray(record.point, reflected + fuzz * randomInUnitSphere());
         attenuation = albedo;
         return scattered.direction.dot(record.normal) > 0;
+    }
+};
+
+struct Dielectric : public Material
+{
+    double refractionIndex;
+
+    Dielectric(double refractionIndex) : refractionIndex(refractionIndex) {}
+
+    bool scatter(const Ray &ray_in, const HitRecord &record, Color &attenuation, Ray &scattered) const override
+    {
+        attenuation = Color(1, 1, 1);
+        double refractionRatio = record.normal.dot(ray_in.direction) > 0 ? refractionIndex : 1.0 / refractionIndex;
+        Vec3 unitDirection = ray_in.direction.normalize();
+        double cosTheta = fmin(-unitDirection.dot(record.normal), 1.0);
+        double sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+        bool cannotRefract = refractionRatio * sinTheta > 1.0;
+        Vec3 direction;
+
+        if (cannotRefract || reflectance(cosTheta, refractionRatio) > randomDouble())
+        {
+            direction = unitDirection.reflect(record.normal);
+        }
+        else
+        {
+            direction = unitDirection.refract(record.normal, refractionRatio);
+        }
+
+        scattered = Ray(record.point, direction);
+        return true;
+    }
+
+    double reflectance(double cosine, double refractionRatio) const
+    {
+        double r0 = (1 - refractionRatio) / (1 + refractionRatio);
+        r0 = r0 * r0;
+        return r0 + (1 - r0) * pow((1 - cosine), 5);
     }
 };

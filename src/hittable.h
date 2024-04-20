@@ -38,9 +38,13 @@ struct HittableList : public Hittable
         {
             if (object->hit(ray, tempRecord, tMin, closestSoFar))
             {
-                hitAnything = true;
-                closestSoFar = tempRecord.t;
-                record = tempRecord;
+                if (tempRecord.t < closestSoFar)
+                {
+                    closestSoFar = tempRecord.t;
+                    hitAnything = true;
+                    closestSoFar = tempRecord.t;
+                    record = tempRecord;
+                }
             }
         }
 

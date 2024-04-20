@@ -21,14 +21,19 @@ struct Camera
     double viewportWidth;
     double viewportHeight;
 
-    Camera(double aspectRatio, double fovHoriz, const Point3 &position, const Vec3 &cameraForwardDirection, const Vec3 &cameraUpDirection, int maxDepth = 3, int samplesPerPixel = 10) : maxDepth(maxDepth), samplesPerPixel(samplesPerPixel), position(position)
+    Camera(double aspectRatio, double fovVertical, const Point3 &position, const Point3 &lookAt, const Vec3 &upDirection, int maxDepth = 3, int samplesPerPixel = 10) : maxDepth(maxDepth), samplesPerPixel(samplesPerPixel), position(position)
     {
-        double theta = deg2rad(fovHoriz);
-        viewportWidth = 2 * tan(theta / 2);
-        viewportHeight = viewportWidth / aspectRatio;
+        double theta = deg2rad(fovVertical);
+        viewportHeight = 2 * tan(theta / 2);
+        viewportWidth = viewportHeight * aspectRatio;
 
-        Vec3 z = cameraForwardDirection.normalize();
-        Vec3 x = cameraUpDirection.cross(z).normalize();
+        setPosition(position, lookAt, upDirection);
+    }
+
+    void setPosition(const Point3 &position, const Point3 &lookAt, const Vec3 &upDirection)
+    {
+        Vec3 z = (lookAt - position).normalize();
+        Vec3 x = upDirection.cross(z).normalize();
         Vec3 y = z.cross(x).normalize();
 
         leftToRight = viewportWidth * x;
@@ -36,13 +41,6 @@ struct Camera
         Vec3 centerToLeft = -(viewportWidth / 2.0) * x;
         Vec3 centerToTop = (viewportHeight / 2.0) * y;
         upperLeftCorner = position + centerToLeft + centerToTop + z;
-    }
-
-    void setPosition(const Point3 &position)
-    {
-        Vec3 direction = position - this->position;
-        this->position = position;
-        upperLeftCorner = upperLeftCorner + direction;
     }
 
     Ray getRay(int u, int v, int width, int height) const
@@ -79,10 +77,14 @@ struct Camera
         return (Color)((1.0 - t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0));
     }
 
-    Image render(const Hittable &world, int width, int height) const
+    Image render(const Hittable &world, int width) const
     {
+        int height = int(viewportHeight * width / viewportWidth);
+        int progress = 0;
         double scale = 1.0 / samplesPerPixel;
         Image image(width, height);
+
+#pragma omp parallel for collapse(2)
         for (int j = 0; j < image.height; ++j)
         {
             for (int i = 0; i < image.width; ++i)
@@ -96,8 +98,13 @@ struct Camera
                 pixelColor = pixelColor * scale;
 
                 image.setPixel(i, j, ((Color)pixelColor).linearToGamma());
+
+// Print progress
+#pragma omp critical
+                std::cout << "\rProgress: " << ++progress << "/" << (image.width * image.height) << std::flush;
             }
         }
+        std::cout << std::endl; // Print a new line after the progress is complete
         return image;
     }
 };

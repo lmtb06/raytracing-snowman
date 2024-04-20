@@ -78,6 +78,14 @@ struct Vec3
     {
         return *this - normal * 2 * (normal.dot(*this));
     }
+
+    Vec3 refract(const Vec3 &normal, double refractionRatio) const
+    {
+        double cosTheta = fmin(-normal.dot(*this), 1.0);
+        Vec3 rPerpendicular = (*this + normal * cosTheta) * refractionRatio;
+        Vec3 rParallel = -normal * sqrt(fabs(1.0 - rPerpendicular.dot(rPerpendicular)));
+        return rPerpendicular + rParallel;
+    }
 };
 
 inline Vec3 operator*(double t, const Vec3 &v)
