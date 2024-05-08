@@ -2,12 +2,18 @@
 
 #include <cmath>
 #include <iostream>
+#include "utils.h"
 
 struct Vec3
 {
     double x, y, z;
 
     Vec3(double x = 0, double y = 0, double z = 0) : x(x), y(y), z(z) {}
+
+    double operator[](int i) const
+    {
+        return i == 0 ? x : (i == 1 ? y : z);
+    }
 
     Vec3 operator+(const Vec3 &v) const
     {
@@ -58,20 +64,14 @@ struct Vec3
         return *this / norm();
     }
 
-    static Vec3 random()
+    static Vec3 random(double min=0.0, double max=1.0)
     {
-        return Vec3(drand48(), drand48(), drand48());
-    }
-
-    static Vec3 random(double min, double max)
-    {
-        return Vec3(drand48() * (max - min) + min, drand48() * (max - min) + min, drand48() * (max - min) + min);
+        return Vec3(randomUniformDouble(min, max), randomUniformDouble(min, max), randomUniformDouble(min, max));
     }
 
     bool nearZero() const
     {
-        const double s = 1e-8;
-        return (fabs(x) < s) && (fabs(y) < s) && (fabs(z) < s);
+        return almostEqualsZero(x) && almostEqualsZero(y) && almostEqualsZero(z);
     }
 
     Vec3 reflect(const Vec3 &normal) const
@@ -93,6 +93,12 @@ inline Vec3 operator*(double t, const Vec3 &v)
     return v * t;
 }
 
+inline Vec3 randomUnitVector()
+{
+    return Vec3::random(-1, 1).normalize();
+}
+
+
 inline Vec3 randomInUnitSphere()
 {
     while (true)
@@ -103,10 +109,6 @@ inline Vec3 randomInUnitSphere()
     }
 }
 
-inline Vec3 randomUnitVector()
-{
-    return randomInUnitSphere().normalize();
-}
 
 inline Vec3 randomOnHemisphere(const Vec3 &normal)
 {

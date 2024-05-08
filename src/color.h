@@ -4,14 +4,12 @@
 #include "utils.h"
 #include <algorithm>
 
-// Couleur RGB normalisée (comprise entre 0 et 1)
 struct Color
 {
     double r, g, b;
 
     Color(double r = 0, double g = 0, double b = 0) : r(r), g(g), b(b)
     {
-        clamp();
     }
 
     explicit Color(const Vec3 &v) : r(v.x), g(v.y), b(v.z) {}
@@ -55,12 +53,32 @@ struct Color
 
     Color linearToGamma() const
     {
-        return Color(std::sqrt(r), std::sqrt(g), std::sqrt(b));
+        double rComp = 0.0;
+        double gComp = 0.0;
+        double bComp = 0.0;
+        if (r > 0)
+        {
+            rComp = std::sqrt(r);
+        }
+        if (g > 0)
+        {
+            gComp = std::sqrt(g);
+        }
+        if (b > 0)
+        {
+            bComp = std::sqrt(b);
+        }
+
+        return Color(
+            rComp, 
+            gComp,
+            bComp
+            );
     }
 
     static Color random(double min = 0.0, double max = 1.0)
     {
-        return Color(randomDouble(min, max), randomDouble(min, max), randomDouble(min, max));
+        return Color(randomUniformDouble(min, max), randomUniformDouble(min, max), randomUniformDouble(min, max));
     }
 };
 

@@ -7,7 +7,13 @@
 
 struct Material
 {
-    virtual bool scatter(const Ray &ray_in, const HitRecord &record, Color &attenuation, Ray &scattered) const = 0;
+    virtual bool scatter(const Ray &ray_in, const HitRecord &record, Color &attenuation, Ray &scattered) const {
+        return false;
+    }
+
+    virtual Color emitted(const Point3 &point) const {
+        return Color(0, 0, 0);
+    }
 };
 
 struct Lambertian : public Material
@@ -40,7 +46,7 @@ struct Metal : public Material
     bool scatter(const Ray &ray_in, const HitRecord &record, Color &attenuation, Ray &scattered) const override
     {
         Vec3 reflected = ray_in.direction.normalize().reflect(record.normal);
-        scattered = Ray(record.point, reflected + fuzz * randomInUnitSphere());
+        scattered = Ray(record.point, reflected + fuzz * randomUnitVector());
         attenuation = albedo;
         return scattered.direction.dot(record.normal) > 0;
     }
@@ -63,7 +69,7 @@ struct Dielectric : public Material
         bool cannotRefract = refractionRatio * sinTheta > 1.0;
         Vec3 direction;
 
-        if (cannotRefract || reflectance(cosTheta, refractionRatio) > randomDouble())
+        if (cannotRefract || reflectance(cosTheta, refractionRatio) > randomUniformDouble())
         {
             direction = unitDirection.reflect(record.normal);
         }
@@ -81,5 +87,17 @@ struct Dielectric : public Material
         double r0 = (1 - refractionRatio) / (1 + refractionRatio);
         r0 = r0 * r0;
         return r0 + (1 - r0) * pow((1 - cosine), 5);
+    }
+};
+
+struct Light : public Material
+{
+    Color color;
+    double intensity;
+    Light(const Color &color, double intensity) : color(color), intensity(intensity) {}
+
+    Color emitted(const Point3 &point) const override
+    {
+        return color * intensity;
     }
 };

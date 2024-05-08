@@ -11,10 +11,16 @@ struct Sphere : public Hittable
     Point3 center;
     double radius;
     std::shared_ptr<Material> material;
+    AABB bBox;
 
-    Sphere(const Point3 &center, double radius, std::shared_ptr<Material> material) : center(center), radius(radius), material(material) {}
+    Sphere(const Point3 &center, double radius, std::shared_ptr<Material> material) : center(center), radius(radius), material(material)
+    {
+        Point3 min = center - Vec3(radius, radius, radius);
+        Point3 max = center + Vec3(radius, radius, radius);
+        bBox = AABB(min, max);
+    }
 
-    bool hit(const Ray &ray, HitRecord &record, double tMin, double tMax) const override
+    bool hit(const Ray &ray, HitRecord &record, const Interval &interval = Interval(0.001, INFINITY)) const override
     {
         Vec3 centerOrigin = ray.origin - center;
         double a = ray.direction.dot(ray.direction);
@@ -29,23 +35,32 @@ struct Sphere : public Hittable
 
         double t1 = (-half_b - sqrt(discriminant)) / a;
         double t2 = (-half_b + sqrt(discriminant)) / a;
-        double smallestT = t1;
+        Interval tInterval(t1, t2);
+        record.tInterval = tInterval;
 
-        if (t2 < t1 && tMin <= t2 && t2 <= tMax)
+        if (!interval.contains(tInterval.min))
         {
-            smallestT = t2;
+            record.tInterval.update(tInterval.max, tInterval.max);
+        }
+        if (!interval.contains(tInterval.max))
+        {
+            record.tInterval.update(tInterval.min, tInterval.min);
         }
 
-        if (smallestT < tMin || smallestT > tMax)
+        if (!interval.contains(tInterval.min) && !interval.contains(tInterval.max))
         {
             return false;
         }
 
-        record.t = smallestT;
-        record.point = ray.at(smallestT);
+        record.point = ray.at(record.tInterval.min);
         record.normal = (record.point - center) / radius;
         record.material = material;
 
         return true;
+    }
+
+    AABB boundingBox() const override
+    {
+        return bBox;
     }
 };

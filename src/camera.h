@@ -7,6 +7,7 @@
 #include "image.h"
 #include "color.h"
 #include "material.h"
+#include "interval.h"
 #include <iostream>
 #include <random>
 
@@ -20,8 +21,9 @@ struct Camera
     int samplesPerPixel;
     double viewportWidth;
     double viewportHeight;
+    Color backgroundColor;
 
-    Camera(double aspectRatio, double fovVertical, const Point3 &position, const Point3 &lookAt, const Vec3 &upDirection, int maxDepth = 3, int samplesPerPixel = 10) : maxDepth(maxDepth), samplesPerPixel(samplesPerPixel), position(position)
+    Camera(double aspectRatio, double fovVertical, const Point3 &position, const Point3 &lookAt, const Vec3 &upDirection, int maxDepth = 3, int samplesPerPixel = 10, const Color backgroundColor = Color(0, 0, 0)) : maxDepth(maxDepth), samplesPerPixel(samplesPerPixel), position(position), backgroundColor(backgroundColor)
     {
         double theta = deg2rad(fovVertical);
         viewportHeight = 2 * tan(theta / 2);
@@ -48,8 +50,8 @@ struct Camera
         Vec3 delta_u = leftToRight / width;
         Vec3 delta_v = -downToUp / height;
         Point3 centrePixel = upperLeftCorner + u * delta_u + v * delta_v;
-        double px = -0.5 + randomDouble();
-        double py = -0.5 + randomDouble();
+        double px = randomUniformDouble(-0.5, 0.5);
+        double py = randomUniformDouble(-0.5, 0.5);
         Point3 samplePixel(px * delta_u + py * delta_v);
         samplePixel = centrePixel + samplePixel;
         Vec3 direction = samplePixel - position;
@@ -57,23 +59,38 @@ struct Camera
         return Ray(position, direction);
     }
 
-    Color rayColor(const Ray &ray, const Hittable &world, double tMin = 0.001, double tMax = INFINITY, int depth = 3) const
+    Color rayColor(const Ray &ray, const Hittable &world, const Interval &interval = Interval(0.001, INFINITY), int depth = 3) const
     {
         HitRecord record;
         if (depth <= 0)
             return Color(0, 0, 0);
 
-        if (world.hit(ray, record, tMin, tMax))
+        if (world.hit(ray, record, interval))
         {
             Ray scattered;
-            Color attenuation;
+            Color attenuation(0, 0, 0);
+            Color colorFromScatter(0, 0, 0);
+            Color colorFromEmission = record.material->emitted(record.point);
+
+            if (ray.direction.dot(record.normal) > 0)
+            {
+                record.normal = -record.normal;
+            }
+
+            record.normal = record.normal.normalize();
+
             if (record.material->scatter(ray, record, attenuation, scattered))
-                return attenuation * rayColor(scattered, world, tMin, tMax, depth - 1);
-            return Color(0, 0, 0);
+            {
+                double lightStrength = fabs(record.normal.dot(scattered.direction.normalize()));
+                colorFromScatter = attenuation * rayColor(scattered, world, interval, depth - 1);
+                // colorFromScatter = colorFromScatter * lightStrength;
+            }
+
+            return colorFromScatter + colorFromEmission;
         }
 
-        Vec3 unitDirection = ray.direction.normalize();
-        double t = 0.5 * (unitDirection.y + 1.0);
+        // return backgroundColor;
+        double t = 0.5 * (ray.direction.normalize().y + 1.0);
         return (Color)((1.0 - t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0));
     }
 
@@ -81,6 +98,8 @@ struct Camera
     {
         int height = int(viewportHeight * width / viewportWidth);
         int progress = 0;
+        int lastPercentage = -1;
+        int totalPixels = width * height;
         double scale = 1.0 / samplesPerPixel;
         Image image(width, height);
 
@@ -89,22 +108,30 @@ struct Camera
         {
             for (int i = 0; i < image.width; ++i)
             {
-                Vec3 pixelColor(0, 0, 0);
+                Color pixelColor(0, 0, 0);
                 for (int s = 0; s < samplesPerPixel; ++s)
                 {
                     Ray ray = getRay(i, j, width, height);
-                    pixelColor = pixelColor + rayColor(ray, world, 0.001, INFINITY, maxDepth);
+                    pixelColor = pixelColor + rayColor(ray, world, Interval(0.001, INFINITY), maxDepth);
                 }
                 pixelColor = pixelColor * scale;
-
-                image.setPixel(i, j, ((Color)pixelColor).linearToGamma());
+                pixelColor = pixelColor.linearToGamma();
+                pixelColor.clamp();
+                image.setPixel(i, j, pixelColor);
 
 // Print progress
 #pragma omp critical
-                std::cout << "\rProgress: " << ++progress << "/" << (image.width * image.height) << std::flush;
+                {
+                    int currentPercentage = (++progress * 100) / totalPixels;
+                    if (currentPercentage != lastPercentage)
+                    {
+                        lastPercentage = currentPercentage;
+                        std::cout << "\rProgress: " << currentPercentage << "%" << std::flush;
+                    }
+                }
             }
         }
-        std::cout << std::endl; // Print a new line after the progress is complete
+        std::cout << std::endl;
         return image;
     }
 };
